@@ -1,0 +1,6 @@
+source code from  <<Python CookBook>>
+
+change a little:add color to it
+
+USEAGE:
+./xmlwf_check.py a.xml b.xml
