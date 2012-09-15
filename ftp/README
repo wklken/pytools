@@ -1,0 +1,15 @@
+
+
+edit ftp.py, config ip/username/pwd.
+It's convenient to operate ftp
+
+
+def help():
+  print("help info:")
+  print("[./ftp.py l]\t show the file list of the ftp site ")
+  print("[./ftp.py f filenamA filenameB]\t check if the file is in the ftp site")
+  print("[./ftp.py p filenameA filenameB]\t upload file into ftp site")
+  print("[./ftp.py g filenameA filenameB]\t get file from ftp site")
+  print("[./ftp.py h]\t show help info")
+  print("other params are invalid")
+
