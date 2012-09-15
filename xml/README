@@ -6,3 +6,31 @@ change a little:add color to it
 
 USEAGE:
 ./xmlwf_check.py a.xml b.xml
+
+2. xml_op.py
+add/delete/modify xml's node/property/text
+demo explain:  http://blog.csdn.net/wklken/article/details/7603071
+
+      cmd_format:
+         Node_operation:       N|a|path|a=1,b=2|[pyTag=,pyText=t1,a=v1,b=v2]
+                               N|d|path|a=1,b=2|[pyTag=]
+         propertity_operation: P|a/c/d|path|a=1,b=2,c=3|a=2,b=3,d=3
+         text_operation:       T|a/c/d|path|a=1|text=afdfsd
+      the problem is how to figure out multi-cmd
+      condition is:
+         i want to change property also ,i want to change some other nodes,
+         add new node,properties or text
+         how to figure out that?
+         which type of format is better?
+
+explain:
+->N|a|path|a=1,b=2|[pyTag=a,pyText=t1,a=v1,b=v2]
+  Node operation|add new node|path-a/b/c just like xpath|<a a="v1" b="v2">t1</a>
+
+说明：
+第一列：N/P/T 操作队形-节点，属性，文本
+第二列：a/c/d 操作类型-新增，修改，删除
+第三列：path 类似于xpath的路径（不算根节点）
+第四列：定位 根据path定位到多个，再根据属性进行精确定位
+第五列：替换值 新的属性值，注意此处pyTag和pyText，text是key的特殊变量
+
