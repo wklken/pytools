@@ -26,6 +26,8 @@ demo explain:  http://blog.csdn.net/wklken/article/details/7603071
 explain:
 ->N|a|path|a=1,b=2|[pyTag=a,pyText=t1,a=v1,b=v2]
   Node operation|add new node|path-a/b/c just like xpath|<a a="v1" b="v2">t1</a>
+  N|d|path|a=1,b=2|[pyTag=]
+  delete Node xpath=path and contain property[a=1 b=2] and 
 
 说明：
 第一列：N/P/T 操作队形-节点，属性，文本
