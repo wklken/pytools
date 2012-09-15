@@ -1,0 +1,46 @@
+CMD:
+./shtest.py test.sh arg1 arg2
+
+USEAGE:
+Use re to match the information in the sh exec log.
+
+1.sh -n, check for static syntax
+2.sh -vx, execute the shell script & color the information I care about
+
+CONFIG:
+exc_mark_pattern： execute cmd log mark re pattern
+error_mark_pattern:  execute error log mark re pattern
+cmd_mark_pattern: cmd mark re pattern
+
+
+执行流程：
+A.sh –n 对脚本进行静态语法检测
+B.sh –vx 执行脚本，获取日志输出，对关注信息进行上色，打印出来。
+
+注：对于脚本执行流程中存在交互的脚本不适用，表现为：停止卡住，慎用
+
+目前标注：
+	1. shell执行错误信息：（飘红，目前收录9种，未覆盖全集，若未收录望提供补充）
+	2. hadoop执行错误：（飘红，目前收录2中，待加入）
+	3. 条件测试（标黄，测试符号）
+	4. 脚本return ,exit值（标蓝）
+	5. 变量赋值（紫色，空变量飘红）
+	6. 日期（紫色）
+	7. 路径(目前只标注tbsc-dev，相对路径)
+	8. Hadoop命令（目前只标注-input,-output）
+	9. 函数声明及调用（标绿）
+	10. Export,重定向等
+	11. 其他零碎的符号标注
+
+目前不够通用，主要是shell执行错误信息对应正则可能不全
+还有一些执行符号，固定信息没有着色。
+欢迎大伙一块补充，完善之，使之更强大和通用
+
+会进行不定期更新和版本重构
+
+
+
+Thx!
+wklken@yeah.net
+
+2012-09-15
