@@ -4,7 +4,7 @@
 #   lingyue.wkl@taobao.com or wukunliang@163.com
 #this script change data from your source to the dest data format
 #2011-08-05 created version0.1
-#2011-10-29 add row-row mapping ,default row value .rebuild all functions. version0.2
+#2011-10-29 add row-row mapping ,default row value .rebuild all functions. version0.2 
 #next:add data auto generate by re expression
 #2011-12-17 add new functions, add timestamp creator.  version0.3
 #2012-03-08 rebuild functions. version0.4
@@ -16,6 +16,7 @@ import os
 import sys
 import getopt
 import time
+import re
 
 
 #read file and get each line without \n
@@ -23,8 +24,7 @@ def read_file(path):
     f = open(path, "r")
     lines = f.readlines()
     f.close()
-    return [line[:-1] for line in lines]
-
+    return [line[:-1] for line in lines ]
 
 #处理一行，转为目标格式，返回目标行
 def one_line_proc(parts, total, ft_map, outsp, empty_fill, fill_with_sno):
@@ -44,7 +44,7 @@ def one_line_proc(parts, total, ft_map, outsp, empty_fill, fill_with_sno):
             else:
                 outline.append(empty_fill)
 
-    default_outsp = outsp.get(0, "\t")
+    default_outsp = outsp.get(0,"\t")
     result = []
     outsize = len(outline)
     for i in range(outsize):
@@ -52,7 +52,6 @@ def one_line_proc(parts, total, ft_map, outsp, empty_fill, fill_with_sno):
         if i < outsize - 1:
             result.append(outsp.get(i + 1, default_outsp))
     return ''.join(result)
-
 
 #处理入口，读文件，循环处理每一行，写出
 #输入数据分隔符默认\t,输出数据默认分隔符\t
@@ -73,7 +72,7 @@ def process(inpath, total, to, outpath, insp="\t", outsp="\t", empty_fill="", fi
     #step2 处理默认值列
     for to_row in to:
         if r"\=" not in str(to_row) and len(str(to_row).split("=")) == 2:
-            ft_map.update({int(to_row.split("=")[0]): "d" + to_row.split("=")[1]})
+            ft_map.update({int(to_row.split("=")[0]): "d"+to_row.split("=")[1]})
             continue
         elif r"\:" not in to_row and len(to_row.split(":")) == 2:
             ft_map.update({int(to_row.split(":")[0]): to_row.split(":")[1]})
@@ -88,11 +87,11 @@ def process(inpath, total, to, outpath, insp="\t", outsp="\t", empty_fill="", fi
             used_row.append(to_index)
 
     #setp3 处理输出分隔符   outsp  0=\t,1=    0代表默认的，其他前面带列号的代表指定的
-    if len(outsp.split(",")) > 1:
-        outsps = outsp.split(",")
+    if len(outsp) > 1 and len(outsp.split(",")) > 1:
+        outsps = re.findall(r"\d=.+?", outsp)
         outsp = {}
-        for outsp_kv in outsps:
-            k, v = outsp_kv.split("=")
+        for outsp_kv in  outsps:
+            k,v = outsp_kv.split("=")
             outsp.update({int(k): v})
     else:
         outsp = {0: outsp}
@@ -103,7 +102,6 @@ def process(inpath, total, to, outpath, insp="\t", outsp="\t", empty_fill="", fi
     result = []
     for line in lines:
         if len(insp.split("|")) > 0:
-            import re
             parts = re.split(insp, line)
         else:
             parts = line.split(insp)
@@ -117,7 +115,6 @@ def process(inpath, total, to, outpath, insp="\t", outsp="\t", empty_fill="", fi
 
     f.writelines(result)
     f.close()
-
 
 #特殊的处理入口，处理维度为每一行,目前只有时间处理
 def handler_specal_part(part_str):
@@ -138,12 +135,12 @@ def handler_specal_part(part_str):
             interval = int(part_str.split("+")[1].strip())
         elif "-" in part_str:
             parts = part_str.split("-")
-            if len(parts) == 2:#20101020 - XX
+            if len(parts) == 2: #20101020 - XX
                 inputdate = parts[0].strip()
                 interval = -int(parts[1].strip())
-            elif len(parts) == 3:#2010-10-20
+            elif len(parts) == 3: #2010-10-20
                 inputdate = part_str
-            elif len(parts) == 4:#2010-10-20 - XX
+            elif len(parts) == 4: #2010-10-20 - XX
                 inputdate = "-".join(parts[:-1])
                 interval = -int(parts[-1])
             else:
@@ -156,11 +153,10 @@ def handler_specal_part(part_str):
             part_str = time.strftime(ts_format.get(to_l), time.localtime(int(part_str)))
     return part_str
 
-
 #获取时间戳的方法
 def get_timestamp(inputdate, ts_format, interval=0):
     if "now()" in inputdate:
-        inputdate = time.strftime("%Y%m%d%H%M%S")
+        inputdate = time.strftime("%Y%m%d%H%M%S") 
     inputdate = inputdate.strip()
     try:
         size = len(inputdate)
@@ -174,7 +170,6 @@ def get_timestamp(inputdate, ts_format, interval=0):
         sys.exit(0)
     return str(int(time.mktime(ts)) + interval)
 
-
 #打印帮助信息
 def help_msg():
     print("功能：原数据文件转为目标数据格式")
@@ -184,64 +179,62 @@ def help_msg():
     print("\t -a '1,3,4'        [必输，array, 域编号字符串，逗号分隔。指定域用原数据字段填充，未指定用'0'填充]")
     print("\t                          -a '3,5=abc,6:2'  第5列默认值abc填充,第6列使用输入的第1列填充，第3列使用输入第1列填充")
     print("\t -o outputfilepath [可选，output, 默认为 inputfilepath.dist ]")
-    print("\t -F 'FS'           [可选，field Sep，原文件域分隔符，默认为\\t,支持多分隔符，'\t||\|' ]")
+    print("\t -F 'FS'           [可选，field Sep，原文件域分隔符，默认为\\t,支持多分隔符，eg.'\t||\|' ]")
     print("\t -P 'OFS'          [可选，out FS，输出文件的域分隔符，默认为\\t,可指定多个，多个需指定序号=分隔符,逗号分隔,默认分隔符序号0 ]")
     print("\t -f 'fill_str'     [可选，fill，未选列的填充值，默认为空 ]")
     print("\t -s                [可选，serial number,当配置时，-f无效，使用列号填充未指派的列]")
     print("\t -e                [可选，error, 源文件列切分不一致行/空行/注释等，会被直接输出，正确行按原逻辑处理]")
     sys.exit(0)
 
-
 def must_be_defined(param, map, error_info):
     if param not in map:
-        print error_info
-        sys.exit(1)
-
+       print error_info
+       sys.exit(1)
 
 #程序入口，读入参数，执行
 def main():
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "F:P:t:a:i:o:f:hse")
+        opts,args = getopt.getopt(sys.argv[1:],"F:P:t:a:i:o:f:hse")
 
-        for op, value in opts:
-            if op in ("-h", "-H", "--help"):
-                help_msg()
-            if op == "-i":
-                inpath = value
-            elif op == "-o":
-                outpath = value
-            elif op == "-t":
-                total = int(value)
-            elif op == "-a":
-                to = value.split(",")
-            elif op == "-F":
-                insp = value.decode("string_escape")
-            elif op == "-P":
-                outsp = value.decode("string_escape")
-            elif op == "-f":
-                empty_fill = value
-            elif op == "-s":
-                fill_with_sno = True
-            elif op == "-e":
-                error_line_out = True
+        for op,value in opts:
+          if op in ("-h", "-H", "--help"):
+            help_msg()
+          if op == "-i":
+            inpath = value
+          elif op == "-o":
+            outpath = value
+          elif op == "-t":
+            total = int(value)
+          elif op == "-a":
+            to = value.split(",")
+          elif op == "-F":
+            insp = value.decode("string_escape")
+          elif op == "-P":
+            outsp = value.decode("string_escape")
+          elif op == "-f":
+            empty_fill = value
+          elif op == "-s":
+            fill_with_sno = True
+          elif op == "-e":
+            error_line_out = True
         if len(opts) < 3:
-            print(sys.argv[0] + " : the amount of params must great equal than 3")
-            print("Command : ./dataformat.py -h")
-            sys.exit(1)
+          print(sys.argv[0]+" : the amount of params must great equal than 3")
+          print("Command : ./dataformat.py -h")
+          sys.exit(1)
 
     except getopt.GetoptError:
-        print(sys.argv[0] + " : params are not defined well!")
+        print(sys.argv[0]+" : params are not defined well!")
         print("Command : ./dataformat.py -h")
         sys.exit(1)
 
     params_map = dir()
 
-    must_be_defined('inpath', params_map, sys.argv[0] + " : -i param is needed,input file path must define!")
-    must_be_defined('total', params_map, sys.argv[0] + " : -t param is needed,the fields of result file must define!")
-    must_be_defined('to', params_map, sys.argv[0] + " : -a param is needed,must assign the field to put !")
+    must_be_defined('inpath', params_map, sys.argv[0]+" : -i param is needed,input file path must define!")
+    must_be_defined('total', params_map, sys.argv[0]+" : -t param is needed,the fields of result file must define!")
+    must_be_defined('to', params_map, sys.argv[0]+" : -a param is needed,must assign the field to put !")
 
     if not os.path.exists(inpath):
-        print(sys.argv[0] + " file : %s is not exists" % inpath)
+        print(sys.argv[0]+" file : %s is not exists"%inpath)
         sys.exit(1)
 
     if 'empty_fill' not in dir():
@@ -252,7 +245,7 @@ def main():
         error_line_out = False
 
     if 'outpath' not in dir():
-        outpath = inpath + ".dist"
+        outpath = inpath+".dist"
 
     if 'insp' in dir() and 'outsp' in dir():
         process(inpath, total, to, outpath, insp, outsp, empty_fill=empty_fill, fill_with_sno=fill_with_sno, error_line_out=error_line_out)
@@ -263,6 +256,5 @@ def main():
     else:
         process(inpath, total, to, outpath, empty_fill=empty_fill, fill_with_sno=fill_with_sno, error_line_out=error_line_out)
 
-
-if __name__ == "__main__":
+if __name__ =="__main__":
     main()
