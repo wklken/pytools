@@ -10,6 +10,8 @@
 #          0.2.3 add sh params support. fix bug and add re patterns
 #          0.2.5 add warn/error pattern and collect the result
 #          0.2.6 use decorator to refine print, refine collect method
+#          0.2.7 last version edited by lingyue.wkl
+#                this py: https://github.com/wklken/pytools/tree/master/shell
 
 #@Desc: Quick test shell script.The target is hacking into it and get all the status i need.
 #TODO: need to keep source code in 200 lines! refine!
@@ -120,7 +122,7 @@ def wrap_print_func(arg):
 
 @wrap_print_func("STATIC SYNTAX")
 def static_syntax_check(file_path):
-    """Check the static syntax"""
+    """use sh -n to Check the static syntax"""
     cmd = SH_N + file_path
     result = commands.getoutput(cmd)
     if result:
@@ -135,14 +137,16 @@ def pre_handler(result):
 
 @wrap_print_func("PROCESS LOG CHECK")
 def dynamic_log_process(file_path, params):
-    """Process the log of sh script"""
+    """run shell, and get the process log , and pass it to process function"""
     cmd = LOG_BEGIN + SH_X + file_path + " " + params
     result = commands.getoutput(cmd)
     pre_handler(result)
     process_line(result)
 
 def cmd_type(line):
-    """return the type of line,and can do something with it"""
+    """return the type of line,and can do something with it
+       + execute cmd line     # comment line    others: normal commend line
+    """
     if line.startswith("+"):
         return LINE_TYPE_EXC,line
     elif line.lstrip().startswith("#"):
@@ -186,6 +190,7 @@ def process_line(result):
 
 @wrap_print_func("RESULT COLLECT")
 def warn_error_collect(collect_list, collect_type="ERROR"):
+    """collect the warning and error info in the end"""
     print str_coloring("RESULT TYPE: " + collect_type, COLOR_GREEN)
     if len(collect_list):
         print str_coloring(collect_type+" FOUND: ", COLOR_RED) + str_coloring(str(len(collect_list)), COLOR_YELLOW) 
@@ -194,12 +199,16 @@ def warn_error_collect(collect_list, collect_type="ERROR"):
     else:
         print str_coloring("NO " + collect_type + " FOUND", COLOR_GREEN)
 
-args = sys.argv[1:]
-sh_name = args[0]
-params = " ".join(args[1:])
-
-static_syntax_check(sh_name)
-
-dynamic_log_process(sh_name, params)
-
-warn_error_collect(error_lines, "ERROR")
+if __name__ == "__main__":
+    args = sys.argv[1:]
+    sh_name = args[0]
+    params = " ".join(args[1:])
+    
+    #step1 : sh -n ,  check the syntax 
+    static_syntax_check(sh_name)
+    
+    #step2 : sh -x ,  check the dynamic log
+    dynamic_log_process(sh_name, params)
+    
+    #step3 : collect the warnings and errors
+    warn_error_collect(error_lines, "ERROR")
