@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 #trans_lasttable_xml.py
@@ -42,12 +42,14 @@ def process_lines(lines):
   return result
 
 #将字段直接拼接为url
-def toUrlStr(result,outpath):
+def toUrlStr(result,tags,outpath):
   url_lines = []
   for xml_cell in result:
     line = []
     keys = xml_cell.keys()
     for key in keys:
+      if tags and key not in tags:
+          continue
       url = urllib.urlencode({key:xml_cell.get(key)})  
       line.append(url)
     url_lines.append("&".join(line)+"\n")  
@@ -106,14 +108,14 @@ def send_to_output_file(out_lines,out_path,osp):
 def help_msg():
     print("功能：只显示lasttable的某些字段，可指定排序字段")
     print("选项:")
-    print("\t -i inputfilepath  [必输，原文件路径]")
-    print("\t -a 'tag1,tag3,tag4'        [必输，xml中字段key，指定输出的序列，按序列顺序输出对应的值]")
-    print("\t -s 'sort_tag'              [可选，排序的字段标签，不输默认用-a第一个字段排序,sort_tag必为-a中一个，否则使用默认]")
-    print("\t -o outputfilepath [可选，默认为 inputfilepath.dist ]")
-    print("\t -r            [可选，将结果反序输出 ]")
-    print("\t -P 'OFS'          [可选，输出文件的域分隔符，默认为\\t ]")
-    print("\t -u           [可选，将doc格式转化为url，=后面内容有经过urlencode\\t ]")
-    print("\t -t           [可选，输出标签\\t ]")
+    print("\t -i inputfilepath    [必输，原文件路径]")
+    print("\t -a 'tag1,tag3,tag4' [必输，xml中字段key，指定输出的序列，按序列顺序输出对应的值]")
+    print("\t -s 'sort_tag'       [可选，排序的字段标签，不输默认用-a第一个字段排序,sort_tag必为-a中一个，否则使用默认]")
+    print("\t -o outputfilepath   [可选，默认为 inputfilepath.dist ]")
+    print("\t -r                  [可选，将结果反序输出 ]")
+    print("\t -P 'OFS'            [可选，输出文件的域分隔符，默认为\\t ]")
+    print("\t -u                  [可选，将doc格式转化为url，=后面内容有经过urlencode\\t ]")
+    print("\t -t                  [可选，输出标签\\t ]")
     sys.exit(0)
 
 #程序入口，读入参数，执行
@@ -122,6 +124,7 @@ def main():
     with_tag = False
     outsp = "\t"
     toUrl = False
+    tags = []
     try:
         opts,args = getopt.getopt(sys.argv[1:],"P:a:i:o:s:rhtu")
  
@@ -173,7 +176,7 @@ def main():
 
     #step 3-1:带-u，表示转为query请求格式，调用toUrlStr,退出
     if toUrl:
-       toUrlStr(result,outpath)
+       toUrlStr(result,tags,outpath)
        sys.exit(0)
     
     #step 3-2: 不带-u，转为默认的格式输出

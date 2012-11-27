@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #gen_lasttable_xml.py
 #used just for creating the xml file for lasttable common/mall
@@ -28,12 +28,12 @@ def one_line_proc(parts,tags,outsp):
       #数据中存在 del
       if ("del:"+tags[toindex]) in parts[toindex]:
           pass
-      #数据中格式为   tag=value的形式，直接输出
-      elif tags[toindex] in parts[toindex] and "=" in parts[toindex]:
-          outline += parts[toindex]+outsp+"\n"
       #数据中带关键字use
       elif "use:" in  parts[toindex] and "=" in parts[toindex]:
           outline += parts[toindex][4:] + outsp+"\n"
+      #数据中格式为   tag=value的形式，直接输出
+      elif tags[toindex] in parts[toindex] and "=" in parts[toindex]:
+          outline += parts[toindex]+outsp+"\n"
       #纯数据 
       else:
           outline += tags[toindex]+"="+parts[toindex]+outsp+"\n"
@@ -55,7 +55,7 @@ def process(inpath,root,tags,noise,outpath,insp="\t",outsp=""):
   for line in lines:
      parts = line.strip("\n").split(insp)
      if len(parts) > tags_len: #中间某个字段值存在^I会出错，目前只适应最后一个的
-       parts[tags_len-1] = "\t".join(parts[tags_len-1:])
+       parts[tags_len-1] = insp.join(parts[tags_len-1:])
        del parts[tags_len:]
 
      if len(parts) == tags_len:
@@ -64,7 +64,7 @@ def process(inpath,root,tags,noise,outpath,insp="\t",outsp=""):
        outline = one_line_proc(parts,tags,outsp)
        result.append(outline)
        if noise:
-         result.append("aaaa=bbb\n")
+         result.append("aaaa=bbb" + outsp + "\n")
        result.append("</"+root+">"+outsp+"\n")
   #step 3:output
   f.writelines(result)
@@ -94,12 +94,13 @@ def help_msg():
 def main():
     #init param value
     insp="\t"
-    outsp="^A"
+    outsp=""
+    root="doc"
+    noise = False
     #step 1: read all options
     try:
         opts,args = getopt.getopt(sys.argv[1:],"F:P:a:i:o:r:hn")
- 
-        noise = False
+
         for op,value in opts:
           if op in ("-h","-H","--help"):
             help_msg()
@@ -118,8 +119,8 @@ def main():
           elif op == "-P":
             outsp = value.decode("string_escape")
         #考虑下这边放在神马地方合适
-        if len(opts) < 3:
-          print(sys.argv[0]+" : the amount of params must great equal than 3")
+        if len(opts) < 2:
+          print(sys.argv[0]+" : the amount of params must great equal than 2")
           sys.exit(1)
     except getopt.GetoptError:
       print getopt.GetoptError
@@ -128,7 +129,7 @@ def main():
     #step2 :check and change option values
     params_map = dir()
     must_be_defined('inpath', params_map, sys.argv[0]+" : -i param is needed,input file path must define!")
-    must_be_defined('root', params_map, sys.argv[0]+" : -r param is needed,the root element of xml file  must define!")
+    #must_be_defined('root', params_map, sys.argv[0]+" : -r param is needed,the root element of xml file  must define!")
     must_be_defined('tags', params_map, sys.argv[0]+" : -a param is needed,must assign the field tags put !")
 
     if not os.path.exists(inpath):

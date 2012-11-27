@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #dataformat.py
 #   lingyue.wkl@taobao.com or wukunliang@163.com

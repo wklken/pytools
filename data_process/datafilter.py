@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding:utf-8 -*-
 #datafilter.py
 # lingyue.wkl@taobao.com or wukunliang@163.com
@@ -39,6 +39,8 @@ def help_msg():
 
 #程序入口，读入参数，执行
 def main():
+    insp = "#"
+    isBlankCut = False
     try:
         opts,args = getopt.getopt(sys.argv[1:],"F:i:o:bh")
 
@@ -54,8 +56,8 @@ def main():
           elif op == "-b":
             isBlankCut = True
 
-        if len(opts) < 2:
-          print(sys.argv[0]+" : the amount of params must great equal than 2")
+        if len(opts) < 1:
+          print(sys.argv[0]+" : the amount of params must great equal than 1")
           sys.exit(1)
 
     except getopt.GetoptError:
@@ -72,10 +74,6 @@ def main():
 
     if 'outpath' not in dir():
       outpath = inpath+".dist"
-    if 'insp' not in dir():
-      insp = "#"
-    if 'isBlankCut' not in dir():
-      isBlankCut = False
 
     lines = get_lines(inpath)
     new_lines = filter(lines,insp,isBlankCut)

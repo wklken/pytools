@@ -63,28 +63,30 @@ exc_mark_pattern = [(r"([\[\]])", COLOR_YELLOW), #for condition testing   must b
                     (r"((\s(=|==|<=|>=|\+=|<|>|'!='|\&\&)\s)|'!')", COLOR_YELLOW),
                     (r"(\s(\-input|\-output|\-i|\-o)\s)", COLOR_YELLOW),
                     ]
-EXC_MARK_PATTERN = [(re.compile(s),color) for s,color in exc_mark_pattern]
+EXC_MARK_PATTERN = [(re.compile(s), color) for s, color in exc_mark_pattern]
 
 #2. error/warn result log match pattern
 # 100% error
 error_mark_pattern = [(r"(No such file or directory|command not found|unknown option|invalid option)",COLOR_RED), #result -> file not found
-                    (r"(unary operator expected)",COLOR_RED), # test failed
-                    (r"(Permission denied)",COLOR_RED),
-                    (r"(syntax error|unexpected|read error)",COLOR_RED),
+                    (r"(unary operator expected)", COLOR_RED), # test failed
+                    (r"(Permission denied)", COLOR_RED),
+                    (r"(syntax error|unexpected|read error)", COLOR_RED),
+                    (r"(sed: -e expression)",COLOR_RED),  # sed 的一些错误
                     (r"(java.io.FileNotFoundException|org.apache.hadoop.mapred.InvalidInputException|java.lang.IllegalMonitorStateException)", COLOR_RED),#javaerror
                     ]
-ERROR_MARK_PATTERN = [(re.compile(s),color) for s,color in error_mark_pattern]
+ERROR_MARK_PATTERN = [(re.compile(s), color) for s, color in error_mark_pattern]
 
 # may be not error ,just warn,notice
 warn_mark_pattern = []
-WARN_MARK_PATTERN = [(re.compile(s),color) for s,color in warn_mark_pattern]
+
+WARN_MARK_PATTERN = [(re.compile(s), color) for s, color in warn_mark_pattern]
 
 #3. command log match pattern
 cmd_mark_pattern = error_mark_pattern + warn_mark_pattern + \
                     [
-                    (r"(line \d+)", COLOR_RED), #error report the line No
+                    (r"(line \d+)", COLOR_RED),  #error report the line No
                     (r"(\$(\{\w+\}))", COLOR_PURPLE),
-                    (r"(\.\.)",COLOR_PURPLE), #相对路径
+                    (r"(\.\.)", COLOR_PURPLE), #相对路径
                     (r"((?<!-)\b(\w+)\b=)", COLOR_YELLOW),
                     (r"(\$(\w+))", COLOR_PURPLE), #变量名
                     (r"(\w+\.sh\s*)", COLOR_GREEN), #*.sh
@@ -95,7 +97,7 @@ cmd_mark_pattern = error_mark_pattern + warn_mark_pattern + \
                     (r"(\|)", COLOR_GREEN),
                     (r"(<<|>>|<|>)", COLOR_YELLOW),
                     ]
-CMD_MARK_PATTERN = [(re.compile(s),color) for s,color in cmd_mark_pattern]
+CMD_MARK_PATTERN = [(re.compile(s), color) for s, color in cmd_mark_pattern]
 #----------pattern used to match end -----------------------------
 
 #static params defined
@@ -106,19 +108,22 @@ def str_coloring(str_info, color=COLOR_NONE):
     """color str"""
     return COLOR_MAP.get(color, COLOR_MAP.get(None)) + str_info + COLOR_MAP.get(COLOR_NONE)
 
+
 def print_symbol(str_info):
     """print the symbol"""
-    print "-"*20 + str_info + "-"*20
+    print "=" * 20 + " " + str_info + " " + "=" * 20
+
 
 def wrap_print_func(arg):
     """wrap func, print begin and end sign"""
     def  newfunc(func):
         def newfunc_withparams(*args, **kwargs):
-            print_symbol(arg+" BEGIN")
+            print_symbol(arg + " BEGIN")
             func(*args, **kwargs)
-            print_symbol(arg+" END")
+            print_symbol(arg + " END")
         return newfunc_withparams
     return newfunc
+
 
 @wrap_print_func("STATIC SYNTAX")
 def static_syntax_check(file_path):
@@ -126,14 +131,16 @@ def static_syntax_check(file_path):
     cmd = SH_N + file_path
     result = commands.getoutput(cmd)
     if result:
-        print "script syntax check:"+str_coloring(" FAILED", COLOR_RED)
-        print str_coloring(result,COLOR_RED)
+        print "script syntax check:" + str_coloring(" FAILED", COLOR_RED)
+        print str_coloring(result, COLOR_RED)
     else:
-        print "script syntax check:"+str_coloring(" PASS", COLOR_GREEN)
+        print "script syntax check:" + str_coloring(" PASS", COLOR_GREEN)
+
 
 def pre_handler(result):
     """pre handle the result lines """
     pass
+
 
 @wrap_print_func("PROCESS LOG CHECK")
 def dynamic_log_process(file_path, params):
@@ -143,17 +150,19 @@ def dynamic_log_process(file_path, params):
     pre_handler(result)
     process_line(result)
 
+
 def cmd_type(line):
     """return the type of line,and can do something with it
        + execute cmd line     # comment line    others: normal commend line
     """
     if line.startswith("+"):
-        return LINE_TYPE_EXC,line
+        return LINE_TYPE_EXC, line
     elif line.lstrip().startswith("#"):
-        return LINE_TYPE_CMT,line
+        return LINE_TYPE_CMT, line
     else:
         #return LINE_TYPE_CMD, CMD_Y + line
-        return LINE_TYPE_CMD,line
+        return LINE_TYPE_CMD, line
+
 
 def mark_sign_by_pattern(line, line_type=LINE_TYPE_EXC):
     """mark the str by pattern"""
@@ -164,15 +173,16 @@ def mark_sign_by_pattern(line, line_type=LINE_TYPE_EXC):
     else:
         use_pattern = CMD_MARK_PATTERN
     native_line = line
-    for pt,color in use_pattern:
+    for pt, color in use_pattern:
         m = pt.findall(line)
         if m:
-            line = pt.sub( COLOR_MAP.get(color)+r"\1"+COLOR_MAP.get(COLOR_NONE), line)
-    for pt,color in ERROR_MARK_PATTERN:
+            line = pt.sub(COLOR_MAP.get(color) + r"\1" + COLOR_MAP.get(COLOR_NONE), line)
+    for pt, color in ERROR_MARK_PATTERN:
         e = pt.findall(native_line)
         if e:
             error_lines.append(line)
     return line
+
 
 def process_line(result):
     """format each line.With the pattern"""
@@ -182,7 +192,7 @@ def process_line(result):
 
         if line_type == LINE_TYPE_EXC:
             result = mark_sign_by_pattern(line, line_type)
-            print PATTERN_ADDSIGN.sub(COLOR_MAP.get(COLOR_GREEN)+r"\1"+COLOR_MAP.get(COLOR_NONE),result)
+            print PATTERN_ADDSIGN.sub(COLOR_MAP.get(COLOR_GREEN) + r"\1" + COLOR_MAP.get(COLOR_NONE), result)
         elif line_type == LINE_TYPE_CMD:
             print mark_sign_by_pattern(line, line_type)
         elif line_type == LINE_TYPE_CMT:
@@ -193,7 +203,7 @@ def warn_error_collect(collect_list, collect_type="ERROR"):
     """collect the warning and error info in the end"""
     print str_coloring("RESULT TYPE: " + collect_type, COLOR_GREEN)
     if len(collect_list):
-        print str_coloring(collect_type+" FOUND: ", COLOR_RED) + str_coloring(str(len(collect_list)), COLOR_YELLOW) 
+        print str_coloring(collect_type + " FOUND: ", COLOR_RED) + str_coloring(str(len(collect_list)), COLOR_YELLOW)
         for line in collect_list:
             print line
     else:
